@@ -46,7 +46,6 @@ import android.widget.Toast;
 import com.microsoft.aad.adal.AuthenticationCallback;
 import com.microsoft.aad.adal.AuthenticationContext;
 import com.microsoft.aad.adal.AuthenticationResult;
-import com.microsoft.aad.adal.hello.R;
 
 public class MainActivity extends Activity {
 
@@ -55,8 +54,6 @@ public class MainActivity extends Activity {
     final static String AUTHORIZATION_HEADER = "Authorization";
 
     final static String AUTHORIZATION_HEADER_BEARER = "Bearer ";
-
-    private AuthenticationContext mAuthContext;
 
     private ProgressDialog mLoginProgressDialog;
 
@@ -74,25 +71,40 @@ public class MainActivity extends Activity {
         mLoginProgressDialog = new ProgressDialog(this);
         mLoginProgressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         mLoginProgressDialog.setMessage("Login in progress...");
-
-        try {
-            // Provide key info for Encryption
-            Utils.setupKeyForSample();
-            // init authentication Context
-            mAuthContext = new AuthenticationContext(MainActivity.this, Constants.AUTHORITY_URL,
-                    false);
-        } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Encryption failed", Toast.LENGTH_SHORT).show();
-        }
-
         Toast.makeText(getApplicationContext(), TAG + "done", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.v(TAG, "onResume");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onResume();
+        Log.v(TAG, "onRestart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.v(TAG, "onStop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
+        Log.v(TAG, "onDestroy");
     }
 
     public void onClickToken(View v) {
         Log.v(TAG, "token button is clicked");
         mLoginProgressDialog.show();
-        mAuthContext.acquireToken(MainActivity.this, Constants.RESOURCE_ID, Constants.CLIENT_ID,
-                Constants.REDIRECT_URL, Constants.USER_HINT,
+        final MyApplication application = (MyApplication)getApplicationContext();
+        application.getAuthContext().acquireToken(MainActivity.this, Constants.RESOURCE_ID,
+                Constants.CLIENT_ID, Constants.REDIRECT_URL, Constants.USER_HINT,
                 new AuthenticationCallback<AuthenticationResult>() {
 
                     @Override
@@ -111,11 +123,11 @@ public class MainActivity extends Activity {
                         if (mLoginProgressDialog.isShowing()) {
                             mLoginProgressDialog.dismiss();
                         }
-                        
+
                         mResult = result;
                         Toast.makeText(getApplicationContext(), "Token is returned",
                                 Toast.LENGTH_SHORT).show();
-                        
+
                         if (mResult.getUserInfo() != null) {
                             Toast.makeText(getApplicationContext(),
                                     "User:" + mResult.getUserInfo().getUserId(), Toast.LENGTH_SHORT)
@@ -124,6 +136,54 @@ public class MainActivity extends Activity {
                     }
 
                 });
+    }
+
+    public void onButtonCallback(View v) {
+        Log.v(TAG, "onButtonCallback is clicked");
+        mLoginProgressDialog.show();
+        final MyApplication application = (MyApplication)getApplicationContext();
+        application.activeCallback = new Runnable() {
+
+            @Override
+            public void run() {
+                application.getAuthContext().acquireToken(MainActivity.this, Constants.RESOURCE_ID,
+                        Constants.CLIENT_ID, Constants.REDIRECT_URL, Constants.USER_HINT,
+                        new AuthenticationCallback<AuthenticationResult>() {
+
+                            @Override
+                            public void onError(Exception exc) {
+                                if (mLoginProgressDialog.isShowing()) {
+                                    mLoginProgressDialog.dismiss();
+                                }
+
+                                Toast.makeText(getApplicationContext(),
+                                        TAG + "getToken Error:" + exc.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onSuccess(AuthenticationResult result) {
+                                if (mLoginProgressDialog.isShowing()) {
+                                    mLoginProgressDialog.dismiss();
+                                }
+
+                                mResult = result;
+                                Toast.makeText(getApplicationContext(), "Token is returned",
+                                        Toast.LENGTH_SHORT).show();
+
+                                if (mResult.getUserInfo() != null) {
+                                    Toast.makeText(getApplicationContext(),
+                                            "User:" + mResult.getUserInfo().getUserId(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                        });
+            }
+        };
+
+        Intent intent = new Intent(this, TestActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -135,9 +195,10 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO Auto-generated method stub
+        Log.v(TAG, "onActivityResult");
+        final MyApplication application = (MyApplication)getApplicationContext();
         super.onActivityResult(requestCode, resultCode, data);
-        mAuthContext.onActivityResult(requestCode, resultCode, data);
+        application.getAuthContext().onActivityResult(requestCode, resultCode, data);
     }
 
     /**
@@ -156,9 +217,10 @@ public class MainActivity extends Activity {
     }
 
     public void onClickClearTokens(View view) {
-        if (mAuthContext != null && mAuthContext.getCache() != null) {
+        final MyApplication application = (MyApplication)getApplicationContext();
+        if (application.getAuthContext() != null && application.getAuthContext().getCache() != null) {
             displayMessage("Clearing tokens");
-            mAuthContext.getCache().removeAll();
+            application.getAuthContext().getCache().removeAll();
         } else {
             textView1.setText("Cache is null");
         }
