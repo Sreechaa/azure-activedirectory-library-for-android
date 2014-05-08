@@ -18,6 +18,8 @@
 
 package com.microsoft.aad.adal;
 
+import java.util.ArrayList;
+
 import android.content.Intent;
 
 interface IBrokerProxy {
@@ -29,9 +31,25 @@ interface IBrokerProxy {
      */
     boolean canSwitchToBroker();
 
+    /**
+     * remove accounts(tokens) related to the app
+     */
     void removeAccounts();
     
+    /**
+     *  link accountname to the app
+     * @param accountName
+     */
     void saveAccount(String accountName);
+    
+    /**
+     * Checks if Authenticator has this account
+     * @param account
+     * @return true if authenticator has this account
+     */
+    boolean hasAccount(String account);
+    
+    ArrayList<String> getAccounts();
 
     /**
      * gets token using authenticator service

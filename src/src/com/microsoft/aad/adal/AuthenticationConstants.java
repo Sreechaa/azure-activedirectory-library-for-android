@@ -151,12 +151,12 @@ public class AuthenticationConstants {
 
         public static final int BROKER_REQUEST_ID = 1177;
 
-        public static final String BROKER_REQUEST = "com.microsoft.aadbroker.adal.broker.request";
+        public static final String BROKER_REQUEST = "com.microsoft.aadauthenticator.adal.broker.request";
 
         /**
          * Account type string.
          */
-        public static final String BROKER_ACCOUNT_TYPE = "com.microsoft.aadbroker.adal";
+        public static final String BROKER_ACCOUNT_TYPE = "com.microsoft.aadauthenticator.adal";
 
         public static final String ACCOUNT_INITIAL_NAME = "aad";
 
@@ -231,7 +231,7 @@ public class AuthenticationConstants {
          * Apk packagename that will install AD-Authenticator. It is used to
          * query if this app installed or not from package manager
          */
-        public static final String PACKAGE_NAME = "com.microsoft.aadbroker";
+        public static final String PACKAGE_NAME = "com.microsoft.aadauthenticator";
 
         /**
          * Signature info for AD-Authenticator installing app to verify broker

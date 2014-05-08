@@ -15,5 +15,7 @@
     <string name="error_token_type_not_supported">Token type is not supported</string>
     <string name="broker_authentication_request_is_invalid">Authetication request is invalid</string>
     <string name="broker_processing">Broker is processing</string>
+    <string name="sign_in_different_user">Sign in as different user</string>
+    <string name="account_picker_title">Select user</string>
 
 </resources>

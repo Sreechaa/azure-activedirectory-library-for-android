@@ -21,6 +21,7 @@ package com.microsoft.aad.adal;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
@@ -32,6 +33,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.crypto.NoSuchPaddingException;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -43,6 +46,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.SparseArray;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 /**
  * ADAL context to get access token, refresh token, and lookup from cache
@@ -604,10 +610,20 @@ public class AuthenticationContext {
         }
     }
 
+    /**
+     * Verifies authenticator's packagename, signature, and checks accounts.
+     * 
+     * @return true if authenticator is available and min of one account is
+     *         present.
+     */
+    public boolean canSwitchToBroker() {
+        return mBrokerProxy.canSwitchToBroker();
+    }
+
     private static boolean isUserMisMatch(final String userId, final AuthenticationResult result) {
         return (!StringExtensions.IsNullOrBlank(userId) && result.getUserInfo() != null
-                && !StringExtensions.IsNullOrBlank(result.getUserInfo().getUserId()) && !userId.equalsIgnoreCase(result
-                .getUserInfo().getUserId()));
+                && !StringExtensions.IsNullOrBlank(result.getUserInfo().getUserId()) && !userId
+                    .equalsIgnoreCase(result.getUserInfo().getUserId()));
     }
 
     /**
@@ -880,73 +896,129 @@ public class AuthenticationContext {
         acquireTokenAfterValidation(callbackHandle, activity, request);
     }
 
-    private void acquireTokenAfterValidation(CallbackHandler callbackHandle,
+    public void showAccountList(final CallbackHandler callbackHandle, final Activity activity,
+            final AuthenticationRequest request) {
+        final ArrayList<String> accountNames = mBrokerProxy.getAccounts();
+        
+        // build dialog
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              
+                final Dialog dialog = new Dialog(activity);
+                dialog.setContentView(R.layout.account_picker_dialog);
+                dialog.setTitle(R.string.account_picker_title);
+                final ListView listview = (ListView)dialog.findViewById(R.id.listView);
+                final AccountAdapter adapter = new AccountAdapter(activity,
+                        android.R.layout.simple_list_item_1, accountNames);
+                listview.setAdapter(adapter);
+                listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, final View view, int position,
+                            long id) {
+                        final String item = (String)parent.getItemAtPosition(position);
+                        Logger.v(TAG, "Clicked account:" + item);
+                        dialog.dismiss();
+                        sThreadExecutor.submit(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                if (!StringExtensions.IsNullOrBlank(item)) {
+                                    Logger.v(TAG, "AuthenticationRequest is updated for account:"
+                                            + item);
+                                    request.setLoginHint(item);
+                                }
+                                acquireTokenAfterValidation(callbackHandle, activity, request);
+                            }
+                        });
+                    }
+                });
+
+              
+                dialog.show();
+            }
+        });
+    }
+
+    private void acquireTokenAfterValidation(final CallbackHandler callbackHandle,
             final Activity activity, final AuthenticationRequest request) {
         Logger.v(TAG, "Token request started" + getCorrelationLogInfo());
 
         // BROKER flow intercepts here
         if (mBrokerProxy.canSwitchToBroker()) {
             Logger.v(TAG, "It switched to broker for context: " + mContext.getPackageName());
-            // cache and refresh call happens through the authenticator service
-            AuthenticationResult result = null;
-            // Dont send background request if prompt flag is always
-            if (request.getPrompt() != PromptBehavior.Always) {
-                try {
-                    result = mBrokerProxy.getAuthTokenInBackground(request);
-                } catch (AuthenticationException ex) {
-                    // pass back to caller for known exceptions such as failure
-                    // to encrypt
-                    callbackHandle.onError(ex);
+            if (StringExtensions.IsNullOrBlank(request.getLoginHint())) {
+                Logger.v(TAG, "Account is not selected" + mContext.getPackageName());
+                showAccountList(callbackHandle, activity, request);
+            } else {
+                // Show account picker if username is not specified.
+                // App could store the username and pass it here.
+
+                // cache and refresh call happens through the authenticator
+                // service
+                AuthenticationResult result = null;
+                // Dont send background request if prompt flag is always
+                if (request.getPrompt() != PromptBehavior.Always) {
+                    try {
+                        result = mBrokerProxy.getAuthTokenInBackground(request);
+                    } catch (AuthenticationException ex) {
+                        // pass back to caller for known exceptions such as
+                        // failure
+                        // to encrypt
+                        callbackHandle.onError(ex);
+                        return;
+                    }
+                }
+
+                if (result != null && result.getAccessToken() != null
+                        && !result.getAccessToken().isEmpty()) {
+                    Logger.v(TAG, "Token is returned from background call "
+                            + getCorrelationLogInfo());
+                    callbackHandle.onSuccess(result);
                     return;
                 }
-            }
 
-            if (result != null && result.getAccessToken() != null
-                    && !result.getAccessToken().isEmpty()) {
-                Logger.v(TAG, "Token is returned from background call " + getCorrelationLogInfo());
-                callbackHandle.onSuccess(result);
-                return;
-            }
+                // launch broker activity
+                if (request.getPrompt() != PromptBehavior.Never) {
+                    Logger.v(TAG, "Launch activity for Authenticator");
+                    mAuthorizationCallback = callbackHandle.callback;
+                    request.setRequestId(callbackHandle.callback.hashCode());
+                    Logger.v(TAG, "Starting Authentication Activity with callback:"
+                            + callbackHandle.callback.hashCode() + getCorrelationLogInfo());
+                    putWaitingRequest(callbackHandle.callback.hashCode(),
+                            new AuthenticationRequestState(callbackHandle.callback.hashCode(),
+                                    request, callbackHandle.callback));
 
-            // launch broker activity
-            if (request.getPrompt() != PromptBehavior.Never) {
-                Logger.v(TAG, "Launch activity for Authenticator");
-                mAuthorizationCallback = callbackHandle.callback;
-                request.setRequestId(callbackHandle.callback.hashCode());
-                Logger.v(TAG, "Starting Authentication Activity with callback:"
-                        + callbackHandle.callback.hashCode() + getCorrelationLogInfo());
-                putWaitingRequest(callbackHandle.callback.hashCode(),
-                        new AuthenticationRequestState(callbackHandle.callback.hashCode(), request,
-                                callbackHandle.callback));
-
-                // onActivityResult will receive the response
-                Intent brokerIntent = mBrokerProxy.getIntentForBrokerActivity(request);
-                if (brokerIntent != null) {
-                    try {
-                        Logger.v(TAG, "Calling activity pid:" + android.os.Process.myPid()
-                                + " tid:" + android.os.Process.myTid() + "uid:"
-                                + android.os.Process.myUid());
-                        activity.startActivityForResult(brokerIntent,
-                                AuthenticationConstants.UIRequest.BROWSER_FLOW);
-                    } catch (ActivityNotFoundException e) {
-                        Logger.e(TAG, "Activity login is not found after resolving intent"
-                                + getCorrelationLogInfo(), "",
-                                ADALError.DEVELOPER_ACTIVITY_IS_NOT_RESOLVED, e);
+                    // onActivityResult will receive the response
+                    Intent brokerIntent = mBrokerProxy.getIntentForBrokerActivity(request);
+                    if (brokerIntent != null) {
+                        try {
+                            Logger.v(TAG, "Calling activity pid:" + android.os.Process.myPid()
+                                    + " tid:" + android.os.Process.myTid() + "uid:"
+                                    + android.os.Process.myUid());
+                            activity.startActivityForResult(brokerIntent,
+                                    AuthenticationConstants.UIRequest.BROWSER_FLOW);
+                        } catch (ActivityNotFoundException e) {
+                            Logger.e(TAG, "Activity login is not found after resolving intent"
+                                    + getCorrelationLogInfo(), "",
+                                    ADALError.DEVELOPER_ACTIVITY_IS_NOT_RESOLVED, e);
+                            callbackHandle.onError(new AuthenticationException(
+                                    ADALError.BROKER_ACTIVITY_IS_NOT_RESOLVED));
+                        }
+                    } else {
                         callbackHandle.onError(new AuthenticationException(
-                                ADALError.BROKER_ACTIVITY_IS_NOT_RESOLVED));
+                                ADALError.DEVELOPER_ACTIVITY_IS_NOT_RESOLVED));
                     }
                 } else {
+                    // it can come here if user set to never for the prompt and
+                    // refresh token failed.
+                    Logger.e(TAG, "Prompt is not allowed and failed to get token:"
+                            + callbackHandle.callback.hashCode() + getCorrelationLogInfo(), "",
+                            ADALError.AUTH_REFRESH_FAILED_PROMPT_NOT_ALLOWED);
                     callbackHandle.onError(new AuthenticationException(
-                            ADALError.DEVELOPER_ACTIVITY_IS_NOT_RESOLVED));
+                            ADALError.AUTH_REFRESH_FAILED_PROMPT_NOT_ALLOWED));
                 }
-            } else {
-                // it can come here if user set to never for the prompt and
-                // refresh token failed.
-                Logger.e(TAG, "Prompt is not allowed and failed to get token:"
-                        + callbackHandle.callback.hashCode() + getCorrelationLogInfo(), "",
-                        ADALError.AUTH_REFRESH_FAILED_PROMPT_NOT_ALLOWED);
-                callbackHandle.onError(new AuthenticationException(
-                        ADALError.AUTH_REFRESH_FAILED_PROMPT_NOT_ALLOWED));
             }
         } else {
             localFlow(callbackHandle, activity, request);
@@ -1525,7 +1597,8 @@ public class AuthenticationContext {
      */
     public static String getVersionName() {
         // Package manager does not report for ADAL
-        // AndroidManifest files are not merged, so it is returning hard coded value
+        // AndroidManifest files are not merged, so it is returning hard coded
+        // value
         return "0.7";
     }
 }
