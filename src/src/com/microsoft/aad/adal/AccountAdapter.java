@@ -8,7 +8,7 @@ import android.content.Context;
 import android.widget.ArrayAdapter;
 
 /**
- * map position to item
+ * Simple adapter to use in account picker
  */
 class AccountAdapter extends ArrayAdapter<String> {
 

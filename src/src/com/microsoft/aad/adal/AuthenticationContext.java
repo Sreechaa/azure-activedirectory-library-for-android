@@ -899,12 +899,12 @@ public class AuthenticationContext {
     public void showAccountList(final CallbackHandler callbackHandle, final Activity activity,
             final AuthenticationRequest request) {
         final ArrayList<String> accountNames = mBrokerProxy.getAccounts();
-        
+
         // build dialog
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              
+
                 final Dialog dialog = new Dialog(activity);
                 dialog.setContentView(R.layout.account_picker_dialog);
                 dialog.setTitle(R.string.account_picker_title);
@@ -935,7 +935,6 @@ public class AuthenticationContext {
                     }
                 });
 
-              
                 dialog.show();
             }
         });
