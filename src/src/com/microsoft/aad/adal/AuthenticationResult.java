@@ -23,8 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Result class to keep code, token and other info Serializable properties Mark
- * temp properties as Transient if you dont want to keep them in serialization
+ * Authentication result
  */
 public class AuthenticationResult implements Serializable {
 
@@ -140,6 +139,7 @@ public class AuthenticationResult implements Serializable {
 
     /**
      * Access token to send to the service in Authorization Header
+     * @return Access token
      */
     public String getAccessToken() {
         return mAccessToken;
@@ -147,6 +147,7 @@ public class AuthenticationResult implements Serializable {
 
     /**
      * Refresh token to get new tokens
+     * @return Refresh token
      */
     public String getRefreshToken() {
         return mRefreshToken;
@@ -154,6 +155,7 @@ public class AuthenticationResult implements Serializable {
 
     /**
      * Token type
+     * @return Access token type
      */
     public String getAccessTokenType() {
         return mTokenType;
@@ -161,6 +163,7 @@ public class AuthenticationResult implements Serializable {
 
     /**
      * Epoch time for expiresOn
+     * @return Date(Epoch time)
      */
     public Date getExpiresOn() {
         return mExpiresOn;
@@ -169,6 +172,7 @@ public class AuthenticationResult implements Serializable {
     /**
      * Multi-resource refresh tokens can be used to request token for another
      * resource
+     * @return True if token has multi-resource refresh token feature
      */
     public boolean getIsMultiResourceRefreshToken() {
         return mIsMultiResourceRefreshToken;
@@ -176,6 +180,7 @@ public class AuthenticationResult implements Serializable {
 
     /**
      * UserInfo returned from IdToken 
+     * @return UserInfo derived from id_token field
      */
     public UserInfo getUserInfo() {
         return mUserInfo;
@@ -190,10 +195,16 @@ public class AuthenticationResult implements Serializable {
         mUserInfo = userinfo;
     }
 
+    /**
+     * Gets tenantId
+     */
     public String getTenantId() {
         return mTenantId;
     }
 
+    /**
+     * Gets result status
+     */
     public AuthenticationStatus getStatus() {
         return mStatus;
     }
@@ -206,18 +217,30 @@ public class AuthenticationResult implements Serializable {
         mCode = code;
     }
 
+    /**
+     * Gets error code
+     */
     public String getErrorCode() {
         return mErrorCode;
     }
 
+    /**
+     * Gets error description
+     */
     public String getErrorDescription() {
         return mErrorDescription;
     }
 
+    /**
+     * Gets error log info
+     */
     public String getErrorLogInfo() {
         return " ErrorCode:" + getErrorCode() + " ErrorDescription:" + getErrorDescription();
     }
 
+    /**
+     * Gets expire status
+     */
     public boolean isExpired() {
         Date validity = getCurrentTime().getTime();
 

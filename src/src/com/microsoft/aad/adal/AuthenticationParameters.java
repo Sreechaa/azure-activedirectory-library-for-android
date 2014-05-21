@@ -38,20 +38,44 @@ import android.os.Handler;
  */
 public class AuthenticationParameters {
 
+    /**
+     * Message for missing authority
+     */
     public final static String AUTH_HEADER_MISSING_AUTHORITY = "WWW-Authenticate header is missing authorization_uri.";
 
+    /**
+     * Message for invalid format
+     */
     public final static String AUTH_HEADER_INVALID_FORMAT = "Invalid authentication header format";
 
+    /**
+     * Message for missing header
+     */
     public final static String AUTH_HEADER_MISSING = "WWW-Authenticate header was expected in the response";
 
+    /**
+     * Message for wrong http status
+     */
     public final static String AUTH_HEADER_WRONG_STATUS = "Unauthorized http response (status code 401) was expected";
 
+    /**
+     * Authenticate Header name
+     */
     public final static String AUTHENTICATE_HEADER = "WWW-Authenticate";
 
+    /**
+     * Bearer constant
+     */
     public final static String BEARER = "bearer";
 
+    /**
+     * Authority key inside the challenge header value
+     */
     public final static String AUTHORITY_KEY = "authorization_uri";
 
+    /**
+     * Resource key inside the challenge header value
+     */
     public final static String RESOURCE_KEY = "resource_id";
 
     private final static String TAG = "AuthenticationParameters";
@@ -71,19 +95,26 @@ public class AuthenticationParameters {
     private static ExecutorService sThreadExecutor = Executors.newSingleThreadExecutor();
 
     /**
-     * get authority
+     * Get authority
+     * 
+     * @return Authority url from challange header
      */
     public String getAuthority() {
         return mAuthority;
     }
 
     /**
-     * get resource
+     * Get resource
+     * 
+     * @return Resource from challange header
      */
     public String getResource() {
         return mResource;
     }
 
+    /**
+     * Constructs default instance for test
+     */
     public AuthenticationParameters() {
     }
 
@@ -92,12 +123,25 @@ public class AuthenticationParameters {
         mResource = resource;
     }
 
+    /**
+     * Callback to use after processing authentication challange
+     */
     public interface AuthenticationParamCallback {
+        /**
+         * Sends AuthenticationParameters if received
+         * 
+         * @param exception Exception received
+         * @param param AuthenticationParameters instance that processed from
+         *            challange
+         */
         public void onCompleted(Exception exception, AuthenticationParameters param);
     }
 
     /**
      * ADAL will make the call to get authority and resource info
+     * @param context Android Context
+     * @param resourceUrl resourceURL to receive Authentication challenge
+     * @param callback Callback to call after processing challenge
      */
     public static void createFromResourceUrl(Context context, final URL resourceUrl,
             final AuthenticationParamCallback callback) {
@@ -145,6 +189,8 @@ public class AuthenticationParameters {
     /**
      * ADAL will parse the header response to get the authority and the resource
      * info
+     * @param authenticateHeader Challenge header received with 401 response
+     * @return  AuthenticationParameters
      */
     public static AuthenticationParameters createFromResponseAuthenticateHeader(
             String authenticateHeader) {

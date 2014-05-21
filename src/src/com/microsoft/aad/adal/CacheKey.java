@@ -27,7 +27,7 @@ import java.util.Locale;
 public class CacheKey implements Serializable {
 
     /**
-     * serial version id
+     * Serial version id
      */
     private static final long serialVersionUID = 8067972995583126404L;
 
@@ -53,6 +53,15 @@ public class CacheKey implements Serializable {
                 (mIsMultipleResourceRefreshToken ? "y" : "n"), mUserId);
     }
 
+    /**
+     * Gets cache key
+     * @param authority
+     * @param resource
+     * @param clientId
+     * @param isMultiResourceRefreshToken
+     * @param userId
+     * @return Cache Key as string
+     */
     public static String createCacheKey(String authority, String resource, String clientId,
             boolean isMultiResourceRefreshToken, String userId) {
 
@@ -92,6 +101,11 @@ public class CacheKey implements Serializable {
         return key.toString();
     }
 
+    /**
+     * Creates cache key from cache item
+     * @param item
+     * @return Cache key as string
+     */
     public static String createCacheKey(TokenCacheItem item) {
         if (item == null) {
             throw new IllegalArgumentException("TokenCacheItem");
@@ -108,10 +122,9 @@ public class CacheKey implements Serializable {
     }
 
     /**
-     * get cache key for query.
-     * 
+     * Gets cache key for query 
      * @param item
-     * @return
+     * @return Cache key as string
      */
     public static String createCacheKey(AuthenticationRequest item) {
         if (item == null) {
@@ -127,7 +140,7 @@ public class CacheKey implements Serializable {
      * include resource and set flag to y.
      * 
      * @param item
-     * @return
+     * @return Cache key for multi-resource refrehs token as string
      */
     public static String createMultiResourceRefreshTokenKey(AuthenticationRequest item) {
         if (item == null) {
@@ -138,22 +151,37 @@ public class CacheKey implements Serializable {
                 item.getLoginHint());
     }
 
+    /**
+     * Gets authority
+     */
     public String getAuthority() {
         return mAuthority;
     }
 
+    /**
+     * Gets resource
+     */
     public String getResource() {
         return mResource;
     }
 
+    /**
+     * Gets clientId
+     */
     public String getClientId() {
         return mClientId;
     }
 
+    /**
+     * Gets userId
+     */
     public String getUserId() {
         return mUserId;
     }
 
+    /**
+     * Gets multi resource refresh token status
+     */
     public boolean getIsMultipleResourceRefreshToken() {
         return mIsMultipleResourceRefreshToken;
     }

@@ -84,15 +84,14 @@ class ChallangeResponseBuilder {
      *            &CertAuthorities=<distinguished names of CAs>&Version=1.0
      *            &SubmitUrl=<URL to submit response>&Context=<server state that
      *            client must convey back>
-     * @return
      * @throws KeyChainException
      */
-    public ChallangeResponse getChallangeResponseFromUri(final String redirectUri) {
+    ChallangeResponse getChallangeResponseFromUri(final String redirectUri) {
         ChallangeRequest request = getChallangeRequest(redirectUri);
         return getDeviceCertResponse(request);
     }
 
-    public ChallangeResponse getChallangeResponseFromHeader(final String challangeHeaderValue,
+    ChallangeResponse getChallangeResponseFromHeader(final String challangeHeaderValue,
             final String endpoint) throws UnsupportedEncodingException {
         ChallangeRequest request = getChallangeRequestFromHeader(challangeHeaderValue);
         request.mSubmitUrl = endpoint;

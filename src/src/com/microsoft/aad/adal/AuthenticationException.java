@@ -21,6 +21,7 @@ package com.microsoft.aad.adal;
 import android.content.Context;
 
 /**
+ * ADAL exception
  */
 public class AuthenticationException extends RuntimeException {
     static final long serialVersionUID = 1;
@@ -28,19 +29,21 @@ public class AuthenticationException extends RuntimeException {
     protected ADALError mCode;
 
     /**
-     * Constructs a new AuthenticationError.
+     * Constructs a new AuthenticationException
      */
     public AuthenticationException() {
     }
 
+    /**
+     * Constructs a new AuthenticationException with ADALError
+     * @param code
+     */
     public AuthenticationException(ADALError code) {
         mCode = code;
     }
 
     /**
-     * @param appcontext Application context
-     * @param code Resource file related error code. Message will be derived
-     *            from resource with using app context
+     * @param code Error code
      * @param details Details related to the error such as query string, request
      *            info
      */
@@ -49,11 +52,21 @@ public class AuthenticationException extends RuntimeException {
         mCode = code;
     }
 
+    /**
+     * 
+     * @param code  Error code
+     * @param details Error message detail
+     * @param throwable Exception
+     */
     public AuthenticationException(ADALError code, String details, Throwable throwable) {
         super(details, throwable);
         mCode = code;
     }
 
+    /**
+     * Gets ADAL error code
+     * @return ADALError
+     */
     public ADALError getCode() {
         return mCode;
     }
@@ -63,6 +76,11 @@ public class AuthenticationException extends RuntimeException {
         return getLocalizedMessage(null);
     }
 
+    /**
+     * Gets localized message
+     * @param context
+     * @return Localized message
+     */
     public String getLocalizedMessage(Context context) {
         if (!StringExtensions.IsNullOrBlank(super.getMessage())) {
             return super.getMessage();

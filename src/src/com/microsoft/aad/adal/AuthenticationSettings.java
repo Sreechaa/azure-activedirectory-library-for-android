@@ -98,11 +98,10 @@ public enum AuthenticationSettings {
     }
 
     /**
-     * set class for work place join related API. This is only used from
+     * Sets class for work place join related API. This is only used from
      * Authenticator side.
      * 
-     * @param <T>
-     * @param clazz
+     * @param clazz Class related to the device certificate lookup
      */
     public void setDeviceCertificateProxyClass(Class clazz) {
         if (IDeviceCertificate.class.isAssignableFrom(clazz)) {
@@ -113,25 +112,22 @@ public enum AuthenticationSettings {
     }
 
     /**
-     * get class for work place join related API. This is only used from
+     * Gets class for work place join related API. This is only used from
      * Authenticator side.
-     * 
-     * @return
      */
     public Class<?> getDeviceCertificateProxy() {
         return mClazzDeviceCertProxy;
     }
 
     /**
-     * get package name to setup intent for AuthenticationActivity
-     * @return
+     * Gets package name to setup intent for AuthenticationActivity
      */
     public String getActivityPackageName() {
         return mActivityPackageName;
     }
 
     /**
-     * set package name to setup intent for AuthenticationActivity
+     * Sets package name to setup intent for AuthenticationActivity
      * @param mActivityPackageName
      */
     public void setActivityPackageName(String mActivityPackageName) {
